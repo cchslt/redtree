@@ -1,0 +1,64 @@
+1、连接数据报：“‘xxx.xxx.xx.xx‘ is not allowed to connect to this MySQL server”
+	1）、mysql -u root -p
+	2）、use mysql; select host,user from user;
+	3）、update user set host ='%' where user ='root';
+	4）、flush privileges; 
+
+2、navicat 连接数据后, schema不展示
+	可能是navicat连接时信息错误
+	1）、右键单击该 mysql 连接，选择编辑连接，点击确定；
+	2）、选择“数据库”；
+	3）、取消勾选“使用自定义数据库列表”，或者选择要显示的数据库。
+
+
+3、部署应用后，如需要远程连接，则用一下方式
+	1）、firewall-cmd --state  #查看当前的防火墙状态
+	2）、firewall-cmd --zone=public --add-port=3306/tcp --permanent  # 需要添加一个新的规则来允许 3306 端口的通信
+	3）、firewall-cmd --reload #重新加载防火墙规则
+	tip：
+		systemctl start firewalld.service #开启服务
+		systemctl enable firewalld.service #设置开机启动
+		systemctl status firewalld #查看FirewallD防火墙状态
+		firewall-cmd --permanent --query-port=80/tcp ##查看80端口有没开放
+		firewall-cmd --remove-service=ftp --permanent ##永久移除ftp服务
+		iptables -L -n ##查看规则，这个命令是和iptables的相同的
+		
+		https://blog.csdn.net/zhengxiaoguo/article/details/125320820
+
+
+4、linux部署mysql
+	1）、mkdir mysql
+	2）、wget https://dev.mysql.com/get/mysql80-community-release-el8-4.noarch.rpm
+	3）、yum install mysql80-community-release-el8-4.noarch.rpm
+	4）、yum module disable mysql -y # 关闭默认的MySQL
+	5）、yum install mysql-community-server -y #安装
+	6）、vi /etc/my.cnf # 修改配置
+	7）、
+		systemctl enable mysqld # 设置开机启动
+		systemctl daemon-reload
+		systemctl start mysqld #启动mysql服务
+		systemctl status mysqld #查看mysql运行状态
+	8）、grep 'temporary password' /var/log/mysqld.log #查找初始密码 
+	9）、mysql -uroot -p #登录
+		ALTER USER 'root'@'localhost' IDENTIFIED BY '自己的密码';
+		flush privileges; 
+		exit;
+		systemctl restart mysqld; #bash下重启MySQL服务
+	
+	tip： 
+		 rpm -qa | grep mysql #列出MySQL相关的安装包
+		 yum remove xxx #依次删除安装包
+		 
+		 如果启动报： --initialize specified but the data directory has files in it. Aborting.
+		 解释：之前可能已经启动过mysql导致mysql数据目录中存在文件
+		 解决：cat /etc/my.cnf | grep datadir #过滤出mysql数据目录
+			datadir=/var/lib/mysql
+			rm -rf /var/lib/mysql/* #删除数据目录下文件
+			systemctl restart mysqld
+
+5、创建database
+    CREATE DATABASE psi
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_general_ci;
+
+
